@@ -50,7 +50,16 @@ def download_csv(resource_id, filename):
             print(f"Downloading {filename} from {csv_url}...")
             csv_data_response = requests.get(csv_url) 
             csv_data_response.raise_for_status()
-            content = csv_data_response.content.decode('utf-8')
+            
+            # Try UTF-8 first, fallback to ISO-8859-1 if needed
+            try:
+                content = csv_data_response.content.decode('utf-8')
+            except UnicodeDecodeError as e:
+                print(f"Error decoding content for {filename} with UTF-8: {e}. Trying with ISO-8859-1.")
+                content = csv_data_response.content.decode('iso-8859-1')
+                print(f"Successfully decoded with ISO-8859-1 fallback.")
+            
+            # Write content to file
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(content)
             print(f"Successfully downloaded and saved to {filepath}")
@@ -71,21 +80,11 @@ def download_csv(resource_id, filename):
     except (ValueError, KeyError) as e: # Includes JSONDecodeError or unexpected JSON structure
         print(f"Error parsing JSON response for {filename} (Resource ID: {resource_id}): {e}")
         return None
-    except UnicodeDecodeError as e:
-        print(f"Error decoding content for {filename}: {e}. Trying with ISO-8859-1.")
-        try:
-            if 'csv_data_response' in locals() and csv_data_response is not None:
-                 content = csv_data_response.content.decode('iso-8859-1')
-                 with open(filepath, "w", encoding="utf-8") as f: # Still save as UTF-8
-                     f.write(content)
-                 print(f"Successfully downloaded (with ISO-8859-1 fallback) and saved to {filepath}")
-                 return filepath
-            else:
-                print("Cannot apply fallback decoding, csv_data_response not available.")
-                return None
-        except Exception as e_fallback:
-            print(f"Fallback decoding also failed for {filename}: {e_fallback}")
-            return None
+    except Exception as e:
+        print(f"Unexpected error during download process for {filename}: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 def parse_remaining_lease(lease_str):
     """Converts 'X years Y months' or 'X years' or 'X mths' or just 'X' (assumed years) to total years as a float."""

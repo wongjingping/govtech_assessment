@@ -1,9 +1,11 @@
 ---
-description: data, querying and modeling related rules
+description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
-Data files (eg .csv) should be stored as git lfs files.
+# Data
+
+Large data files (eg .csv) should be stored as git lfs files.
 
 `data` folder should be mounted on postgres volume to facilitate importing of data into the postgres image.
 
@@ -21,4 +23,28 @@ print(response.json())
 Documentation for searching data on data.gov.sg can be found here:
 https://guide.data.gov.sg/developer-guide/dataset-apis
 
+# Modeling
+
 Model artifacts should be stored using the library's own serialization format, falling back to pickle if none available.
+
+`model` folder containing trained model should be mounted on the api service's container as a volume.
+
+Favour smaller and simpler models that have explainable features and are faster to serve (decision trees).
+
+Since our data is heavily auto-regressive, split train/test by time and perform time-series cross-validation. For example:
+Fold 1: train 1990-2020, test 2021 onwards
+Fold 2: train 1990-2021, test 2022 onwards
+...
+3-5 folds is reasonable.
+
+Make reasonable preprocessing decisions for the features, omitting extremely sparse features (e.g. using every possible street name) to avoid overfitting.
+
+When searching over hyperparameters, limit to just 2 or 3 of the most important ones, and limit to not more than 10 training/evaluation runs in total.
+
+# API
+
+Use pydantic for request objects always when in a fastapi service / route (instead of doing .json() to get the attributes).
+
+# Docker
+
+Use *-alpine images for OSS projects' docker images (e.g. postgres alpine) where possible to keep deps small.

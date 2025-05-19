@@ -1,2 +1,16 @@
 pandas
-requests 
+requests
+psycopg2-binary
+python-dotenv
+sqlalchemy
+scikit-learn
+joblib
+matplotlib
+numpy
+seaborn
+fastapi
+uvicorn
+pydantic
+xgboost
+anthropic
+python-multipart 
