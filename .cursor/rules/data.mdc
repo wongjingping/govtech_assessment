@@ -1,0 +1,24 @@
+---
+description: data, querying and modeling related rules
+globs: 
+alwaysApply: false
+---
+Data files (eg .csv) should be stored as git lfs files.
+
+`data` folder should be mounted on postgres volume to facilitate importing of data into the postgres image.
+
+Fetching of the data from data.gov can be achieved like so if you have the dataset_id:
+```py
+import requests
+          
+dataset_id = "d_ebc5ab87086db484f88045b47411ebc5"
+url = "https://data.gov.sg/api/action/datastore_search?resource_id="  + dataset_id
+        
+response = requests.get(url)
+print(response.json())
+```
+
+Documentation for searching data on data.gov.sg can be found here:
+https://guide.data.gov.sg/developer-guide/dataset-apis
+
+Model artifacts should be stored using the library's own serialization format, falling back to pickle if none available.
