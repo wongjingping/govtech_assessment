@@ -1,6 +1,6 @@
 import unittest
 import sys
-import os
+import pandas as pd
 from pathlib import Path
 from datetime import datetime
 
@@ -9,6 +9,58 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 # Import the models to test
 from utils.models import ResalePrice, CompletionStatus
+from modeling.train_model import preprocess_data
+
+class TestPreprocessData(unittest.TestCase):
+    """Test cases for the preprocess_data function in train_model.py."""
+    
+    def test_preprocess_data(self):
+        """Test that preprocess_data correctly transforms input data."""
+        # Create sample data
+        sample_data = pd.DataFrame({
+            'month': pd.to_datetime(['2021-01-01', '2021-02-01', '2021-03-01']),
+            'town': ['ANG MO KIO', 'BEDOK', 'CLEMENTI'],
+            'flat_type': ['3 ROOM', '4 ROOM', '5 ROOM'],
+            'block': ['123', '456', '789'],
+            'street_name': ['Street A', 'Street B', 'Street C'],
+            'storey_range': ['01 TO 03', '04 TO 06', '07 TO 09'],
+            'floor_area_sqm': [70.0, 80.0, 90.0],
+            'flat_model': ['Improved', 'New Generation', 'Model A'],
+            'lease_commence_date': [1980, 1990, 2000],
+            'resale_price': [400000.0, 500000.0, 600000.0],
+            'remaining_lease_years': [60.0, 70.0, 80.0]
+        })
+        
+        # Process the data
+        processed_data = preprocess_data(sample_data)
+        
+        # Check that the expected columns were created
+        self.assertIn('year', processed_data.columns)
+        self.assertIn('month_num', processed_data.columns)
+        self.assertIn('month_str', processed_data.columns)
+        self.assertIn('storey_avg', processed_data.columns)
+        self.assertIn('property_age', processed_data.columns)
+        
+        # Check that the month_str column contains the correct values
+        expected_months = ['January', 'February', 'March']
+        self.assertListEqual(processed_data['month_str'].tolist(), expected_months)
+        
+        # Check that month columns were correctly extracted
+        self.assertListEqual(processed_data['year'].tolist(), [2021, 2021, 2021])
+        self.assertListEqual(processed_data['month_num'].tolist(), [1, 2, 3])
+        
+        # Check that storey_avg was calculated correctly
+        self.assertListEqual(processed_data['storey_avg'].tolist(), [2.0, 5.0, 8.0])
+        
+        # Check that property_age was calculated correctly (based on current_year - lease_commence_date)
+        current_year = datetime.now().year
+        expected_ages = [current_year - 1980, current_year - 1990, current_year - 2000]
+        self.assertListEqual(processed_data['property_age'].tolist(), expected_ages)
+        
+        # Check that specified columns were dropped
+        for col in ['month', 'block', 'street_name', 'storey_range', 'storey_min', 'storey_max']:
+            self.assertNotIn(col, processed_data.columns)
+
 
 class TestResalePriceModel(unittest.TestCase):
     """Test cases for the ResalePrice model."""

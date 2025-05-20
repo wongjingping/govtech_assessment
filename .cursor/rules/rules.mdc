@@ -48,3 +48,19 @@ Use pydantic for request objects always when in a fastapi service / route (inste
 # Docker
 
 Use *-alpine images for OSS projects' docker images (e.g. postgres alpine) where possible to keep deps small.
+
+# Testing
+
+Always update tests for functions that were modified and run them to make sure they pass.
+
+If any dependency of the API was updated, test the API by curling the docker container hosting the API to make sure that it still works. If new dependencies are added to requirements.txt, then rebuild the container. Else just ensure that the new code has been hot-reloaded into the API service by examining the docker logs before running the test via curl.
+
+# Code Style
+
+Sort and arrange imports whenever updating the import section.
+
+Prefer import and folder structure that favour running from a docker container with the code's folder mounted as a volume.
+
+# Documentation
+
+Update the root README.md as needed whenever changes are made.

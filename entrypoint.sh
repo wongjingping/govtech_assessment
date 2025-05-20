@@ -1,11 +1,21 @@
 #!/bin/bash
 set -e
 
-echo "Waiting for PostgreSQL to be ready..."
-until PGPASSWORD=$POSTGRES_PASSWORD psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c '\q'; do
-  echo "PostgreSQL is unavailable - sleeping"
-  sleep 2
+echo "Starting API server..."
+echo "Current directory: $(pwd)"
+
+# Wait for the source code to be mounted
+echo "Waiting for source code volumes to be mounted..."
+while [ ! -f /app/src/app.py ]; do
+    echo "Source code not yet mounted, waiting..."
+    sleep 1
 done
 
-echo "PostgreSQL is up - starting API server"
-exec uvicorn src.app:app --host 0.0.0.0 --port 8000 
+echo "Contents of /app:"
+ls -la /app
+echo "Contents of /app/src:"
+ls -la /app/src
+echo "Python path: $PYTHONPATH"
+
+echo "Starting Uvicorn server..."
+exec uvicorn main:app --host 0.0.0.0 --port 8000 --reload 

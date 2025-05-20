@@ -21,7 +21,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -92,6 +92,8 @@ def preprocess_data(df):
     data['month'] = pd.to_datetime(data['month'])
     data['year'] = data['month'].dt.year
     data['month_num'] = data['month'].dt.month
+    # add a string representation of the month to model seasonal effects discretely
+    data['month_str'] = data['month'].dt.strftime('%B')
     
     # Extract storey information (take the average of the range)
     data['storey_range'] = data['storey_range'].astype(str)
@@ -107,12 +109,12 @@ def preprocess_data(df):
     columns_to_drop = ['month', 'block', 'street_name', 'storey_range', 'storey_min', 'storey_max']
     data = data.drop(columns=columns_to_drop)
     
-    # Fill missing values in remaining_lease_years with median
-    # If lease_commence_date is available, we could calculate it, but for simplicity, use median
-    data['remaining_lease_years'].fillna(data['remaining_lease_years'].median(), inplace=True)
+    # Fill missing values in remaining_lease_years with median - fixed inplace warning
+    median_lease = data['remaining_lease_years'].median()
+    data['remaining_lease_years'] = data['remaining_lease_years'].fillna(median_lease)
     
-    # Handle missing values in flat_model
-    data['flat_model'].fillna('UNKNOWN', inplace=True)
+    # Handle missing values in flat_model - fixed inplace warning
+    data['flat_model'] = data['flat_model'].fillna('UNKNOWN')
     
     print(f"Data shape after preprocessing: {data.shape}")
     return data
@@ -131,6 +133,10 @@ def build_pipeline(X):
     # Identify categorical and numerical features
     categorical_features = X.select_dtypes(include=['object']).columns.tolist()
     numerical_features = X.select_dtypes(include=['int64', 'float64']).columns.tolist()
+    
+    # Make sure 'month_str' is in the categorical features if it exists in X
+    if 'month_str' in X.columns and 'month_str' not in categorical_features:
+        categorical_features.append('month_str')
     
     # Preprocessing for categorical features
     categorical_transformer = Pipeline(steps=[

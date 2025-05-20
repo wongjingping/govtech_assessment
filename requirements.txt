@@ -3,7 +3,7 @@ requests
 psycopg2-binary
 python-dotenv
 sqlalchemy
-scikit-learn
+scikit-learn==1.5.2
 joblib
 matplotlib
 numpy

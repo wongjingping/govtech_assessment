@@ -79,6 +79,8 @@ Average performance metrics across all folds:
 - Mean Absolute Error (MAE): ~$102,303
 - R² score: ~0.49
 
+Unfortunately we didn't have time to do a proper hyperparameter tuning, and relied on the default parameters.
+
 ### Observations
 
 - Performance varies by forecast year, with RMSE increasing in more recent years (2024-2025)
@@ -97,6 +99,7 @@ Several preprocessing decisions were made to improve model performance:
    - Created property age from lease commencement date
    - Converted storey ranges to numerical values (min, max, average)
    - Extracted time features (year, month) from transaction date
+   - Added a string representation of the month to model seasonal effects discretely
 
 2. **Feature Selection**:
    - Removed highly specific features like block and street name to prevent overfitting
