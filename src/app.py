@@ -140,7 +140,8 @@ You can use this function to answer questions about HDB properties and prices, s
             "description": """Predict the resale price for a given HDB property.
 This function uses a pre-trained gradient boosting model to predict the resale price for a given HDB property.
 The model was trained on resale price data from 1990 to 2025, and is able to predict the resale price for a given HDB property.
-Impute missing values for the property attributes using reasonable estimates.
+Impute missing values for the function parameters (ie features) using reasonable defaults.
+For example, if the storey_range is not provided, use the median storey range for the given flat_type.
 """,
             "input_schema": {
                 "type": "object",

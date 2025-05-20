@@ -191,6 +191,16 @@ The `/ask` endpoint is the primary endpoint for all chat-like interactions. It u
 Internally, it wraps the `query_database` and `predict_price` functions as tools, and uses Claude to decide which tool to use.
 
 ### Request
+The system consists of three main components:
+
+1. **PostgreSQL Database**: Runs on port 5432
+2. **FastAPI Backend**: Runs on port 8000
+3. **Next.js Frontend**: Runs on port 3000
+
+With the full system running, you can access:
+- Chat interface at http://localhost:3000
+- Swagger API documentation at http://localhost:8000/docs
+
 Assuming you have the docker container for the API running at port 8000:
 ```bash
 curl -X POST "http://localhost:8000/ask" -H "Content-Type: application/json" -d '{"question": "What is the average price per square meter for flats in Woodlands?"}' --no-buffer
@@ -218,58 +228,6 @@ The streaming response consists of a series of SSE events. Each event has a spec
 4. **tool_response** - Results returned by the tool
 5. **end** - Indicates the end of the response stream
 
-### Example JavaScript Client Code
-```javascript
-async function askQuestion(question) {
-  const response = await fetch('http://localhost:8000/ask', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ question }),
-  });
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    
-    const text = decoder.decode(value);
-    const events = text.split('\n\n').filter(e => e.trim().startsWith('data:'));
-    
-    for (const eventText of events) {
-      if (!eventText.startsWith('data:')) continue;
-      
-      const jsonStr = eventText.slice(5).trim();
-      try {
-        const event = JSON.parse(jsonStr);
-        
-        switch (event.type) {
-          case 'start':
-            console.log('Stream started');
-            break;
-          case 'assistant_message':
-            console.log('Assistant:', event.content);
-            break;
-          case 'tool_call':
-            console.log('Using tool:', event.name, 'with input:', event.input);
-            break;
-          case 'tool_response':
-            console.log('Tool response:', event.response);
-            break;
-          case 'end':
-            console.log('Stream ended');
-            break;
-        }
-      } catch (e) {
-        console.error('Error parsing event:', e);
-      }
-    }
-  }
-}
-```
 
 ## Other Endpoints
 
@@ -340,6 +298,96 @@ curl -X POST "http://localhost:8000/query" \
   "explanation": "This query retrieves the top 5 most expensive HDB towns in the last 3 years based on the average resale price. It does this by:\n    1. Filtering the resale_prices table to only include records from the last 3 years using the month column and the DATE_TRUNC function.\n    2. Grouping the results by the town column and calculating the average resale_price for each town.\n    3. Ordering the results by the average resale price in descending order.\n    4. Limiting the output to the top 5 rows.\"\n"
 }
 ```
+
+# Frontend
+
+## Overview
+The system includes a modern, user-friendly chat interface built with Next.js and Tailwind CSS. This frontend provides an intuitive way to interact with the HDB price analysis system through natural language questions.
+
+## Features
+- **Interactive Chat Interface**: A clean, responsive design for asking questions and viewing answers
+- **Real-time Streaming**: Responses stream in real-time using Server-Sent Events (SSE)
+- **Markdown Support**: Rich text formatting for tables, lists, and other structured data
+- **Debugging Tools**: Expandable sections showing tool calls and responses for transparency
+- **Mobile-Friendly**: Responsive design that works on various screen sizes
+
+## Architecture
+The frontend is containerized alongside the backend services:
+- **Next.js**: Provides the React framework and development server
+- **Tailwind CSS**: Used for styling the components
+- **React Markdown**: Renders formatted content from the API
+
+## Accessing the Frontend
+Once the system is running, the chat interface is available at:
+```
+http://localhost:3000
+```
+
+## Using the Chat Interface
+1. **Ask a Question**: Type your question in the input field at the bottom of the screen
+2. **View Response**: The assistant's answer will stream in real-time
+3. **See Details**: Click "Show processing details" under any response to view the behind-the-scenes API calls
+4. **Examples of Good Questions**:
+   - "What is the average price per square meter for flats in Woodlands?"
+   - "Which HDB towns have seen the highest price increases in the last 5 years?"
+   - "Predict the price of a 4-room flat in Tampines with 90 square meters."
+   - "What are the least expensive neighborhoods for 3-room flats?"
+
+# End-to-End Testing
+
+## Testing the Complete System
+To test the entire system end-to-end:
+
+1. **Start all services**:
+```bash
+docker compose up -d
+```
+
+2. **Verify the services**:
+```bash
+docker ps
+```
+You should see three containers running: `hdb_postgres`, `hdb_api`, and `hdb_frontend`.
+
+3. **Access the web interface**:
+   - Open a browser and navigate to http://localhost:3000
+   - The chat interface should load, indicating a successful frontend deployment
+
+4. **Test API connectivity**:
+   - Type a question in the chat interface, e.g., "What's the average price of HDB flats in Woodlands?"
+   - You should receive a streaming response with the assistant's answer
+   - Expanding "Show processing details" should reveal the API calls made
+
+5. **Verify database connectivity**:
+   - Ask a question that requires database access, e.g., "Show me the top 5 most expensive towns"
+   - The response should include data retrieved from the PostgreSQL database
+
+## Example Test Flow
+
+A comprehensive test might include:
+
+1. **Simple database query**: "What is the average price of 4-room flats?"
+2. **Complex analysis**: "Which towns have seen the highest price increase in the past 5 years?"
+3. **Price prediction**: "Predict the price of a 5-room flat in Tampines built in 1990."
+4. **Error handling**: Enter an ambiguous or nonsensical question to test error responses
+
+## Troubleshooting End-to-End Issues
+
+If the end-to-end test fails, check the following:
+
+1. **Frontend logs**:
+```bash
+docker logs hdb_frontend
+```
+
+2. **API logs**:
+```bash
+docker logs hdb_api
+```
+
+3. **Network connectivity**: Ensure the API URL is correctly configured in the frontend
+
+4. **CORS settings**: Verify that the API is allowing cross-origin requests from the frontend
 
 # Logging System
 

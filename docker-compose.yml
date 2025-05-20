@@ -52,6 +52,24 @@ services:
     networks:
       - hdb_network
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hdb_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - API_URL=http://api:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api
+    networks:
+      - hdb_network
+
 networks:
   hdb_network:
     driver: bridge
