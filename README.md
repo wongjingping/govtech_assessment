@@ -1,6 +1,18 @@
 # Goal
 Build an end-to-end ML system to analyse and predict resale flat prices across Singapore. The system will provide comprehensive market insights and location-specific comparisons through analysis of transaction data and property characteristics, supplemented with AI-generated natural language explanations.
 
+# Demo
+
+**[➡️ Watch the HDB Price Analysis Demo Video](./resale_demo.mp4)**
+
+This demo video showcases the HDB Price Analysis System in action, demonstrating:
+- Interactive chat interface for natural language queries
+- Real-time response streaming
+- Database queries and price predictions
+- Detailed processing information with tool calls and responses
+
+To run this demo yourself, follow the setup instructions below and visit http://localhost:3000 after deploying the system.
+
 # Tech Stack
 Prefer:
 - python fastapi for API
